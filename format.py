@@ -1,0 +1,28 @@
+import pandas as pd
+import numpy as np
+df = pd.read_csv('https://raw.githubusercontent.com/bool1060/project451/main/originalData.csv')
+df.drop(['Unnamed: 0'], axis=1, inplace=True)
+df['Kilometres'] = df['Kilometres'].str.replace('km', '')
+df['Kilometres'] = pd.to_numeric(df['Kilometres'])
+df['Kilometres'] = df['Kilometres'].fillna(df.groupby('Year')['Kilometres'].transform('mean'))
+df.dropna(subset=['Kilometres'], inplace=True)
+df['Body Type'] = df['Body Type'].fillna(df.groupby(['Make', 'Model', 'Year'])['Body Type'].transform('count').idxmax())
+df[' Engine'] = df[' Engine'].fillna(df.groupby(['Make', 'Model', 'Year', 'Body Type'])[' Engine'].transform('count').idxmax())
+df.drop([' Transmission'], axis=1, inplace=True)
+df[' Drivetrain'] = df[' Drivetrain'].fillna(df.groupby(['Model', 'Year', ' Engine'])[' Drivetrain'].transform('count').idxmax())
+df[' Exterior Colour'] = df[' Exterior Colour'].fillna(df.groupby(['Model', 'Year', 'Body Type'])[' Exterior Colour'].transform('count').idxmax())
+counts = df[' Exterior Colour'].value_counts()
+df = df[df.groupby(' Exterior Colour')[' Exterior Colour'].transform(lambda x: x.count()) >= 200]
+df.drop([' Interior Colour'], axis=1, inplace=True)
+df[' Doors'] = df[' Doors'].fillna(df.groupby(['Model', 'Year', 'Body Type'])[' Doors'].transform('count').idxmax())
+df.drop([' Passengers'], axis=1, inplace=True)
+df[' Fuel Type'] = df[' Fuel Type'].fillna(df.groupby(['Model', 'Year', ' Engine'])[' Fuel Type'].transform('count').idxmax())
+df.drop([' Highway', ' City'], axis=1, inplace=True)
+df = pd.get_dummies(df)
+kmq005 = df['Kilometres'].quantile(0.005)
+kmq995 = df['Kilometres'].quantile(0.995)
+pq005 = df['Price'].quantile(0.005)
+pq995 = df['Price'].quantile(0.995)
+df = pd.get_dummies(df).reset_index(drop=True)
+df.head(10)
+
